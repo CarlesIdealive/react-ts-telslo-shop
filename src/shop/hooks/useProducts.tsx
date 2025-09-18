@@ -11,8 +11,10 @@ export const useProducts = () => {
   const page = searchParams.get('page') || 1;
   const sizes = searchParams.get('sizes') || '';
   const price = searchParams.get('price') || '';
-  // Calculos para offset y minPrice y maxPrice
+  const query = searchParams.get('query') || '';
+  // Calculos para offset, query, [minPrice y maxPrice]
   const offset = (Number(page) - 1) * Number(limit);
+  
   let minPrice = undefined;
   let maxPrice = undefined;
   switch (price) {
@@ -38,14 +40,15 @@ export const useProducts = () => {
   
   // UTILIZAMOS TANSTACK QUERY
   return useQuery({
-    queryKey: ['products', { limit, offset, gender, sizes, minPrice, maxPrice }],
+    queryKey: ['products', { limit, offset,  sizes, minPrice, maxPrice, query, gender}],
     queryFn: () => getProductsAction({ 
       limit, 
       offset,
       gender,
       sizes,
       minPrice,
-      maxPrice
+      maxPrice,
+      query
     }),
     staleTime: 1000 * 60 * 5, // 5 minutes
   })  
