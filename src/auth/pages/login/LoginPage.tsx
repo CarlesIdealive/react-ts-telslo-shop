@@ -1,19 +1,20 @@
 import { type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+import { useAuthStore } from '@/auth/store/auth.store';
 import { CustomLogo } from '@/components/custom/CustomLogo';
-import { loginAction } from '@/auth/actions/login.action';
-import { toast } from 'sonner';
 // import { useAuthLogin } from '@/auth/hooks/useAuth-login';
 // import { useQuery } from '@tanstack/react-query';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const { login } = useAuthStore();
 
   const handleLogin = async ( event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -38,18 +39,15 @@ export const LoginPage = () => {
     //   return;
     // }
     //3.- Cutre TRY CATCH
-    try {
-      const data = await loginAction(email, password);
-      localStorage.setItem('token', data.token);
-      console.log(data);
+    const isLogged = await login(email, password);
+    if (isLogged) {
       navigate('/');
-    } catch (error) {
-        toast.error('Error en la autenticación');
-        console.log('Error en la autenticación');
-        console.log('Error capturado: ',error);
+      return;
     }
-  };
 
+    toast.error('Error en la autenticación');
+    return;
+  }
 
   return (
     <div className={'flex flex-col gap-6'}>

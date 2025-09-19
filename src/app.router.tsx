@@ -12,6 +12,7 @@ import { RegisterPage } from './auth/pages/register/RegisterPage';
 import { DashboardPage } from './admin/pages/dashboard/DashboardPage';
 import { AdminProductPage } from './admin/pages/product/AdminProductPage';
 import { AdminProductsPage } from './admin/pages/products/AdminProductsPage';
+import { AdminRoute, NotAuthenticatedRoute } from './components/routes/ProtectedRoutes';
 
 const AuthLayout = lazy(() => import('./auth/layouts/AuthLayout'));
 const AdminLayout = lazy(() => import('./admin/layouts/AdminLayout'));
@@ -38,9 +39,13 @@ export const appRouter = createBrowserRouter([
   },
 
   // Auth Routes
+  // REquiere que el usuario NO esté autenticado
   {
     path: '/auth',
-    element: <AuthLayout />,
+    element: 
+      <NotAuthenticatedRoute>
+        <AuthLayout />
+      </NotAuthenticatedRoute>,
     children: [
       {
         index: true,
@@ -57,9 +62,13 @@ export const appRouter = createBrowserRouter([
     ],
   },
   // Admin Routes
+  // Requiere que el usuario esté autenticado y sea admin
   {
     path: '/admin',
-    element: <AdminLayout />,
+    element:
+      <AdminRoute>
+         <AdminLayout />
+      </AdminRoute>,
     children: [
       {
         index: true,

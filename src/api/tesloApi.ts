@@ -5,6 +5,14 @@ const tesloApi = axios.create({
 
 });
 
-export {tesloApi};
+//Interceptor para añadir el token a cada peticion (REquest)
+//Cualquier peticion que se haga con tesloApi tendra el token en el header SI existe en el localStorage
+tesloApi.interceptors.request.use( (config) => {
+    const token = localStorage.getItem('token');
+    if (token) 
+        config.headers.Authorization = `Bearer ${token}`;
 
-//TODO: Interceptores
+    return config;
+})
+
+export {tesloApi};

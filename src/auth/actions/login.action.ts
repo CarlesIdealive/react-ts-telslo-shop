@@ -13,7 +13,7 @@ export const loginAction = async (email: string, password: string): Promise<Auth
         return data;
 
     } catch (error) {
-        console.log('LoginAction: ', error);
+        // console.log('LoginAction: ', error);
         throw error;
     }
 

@@ -1,12 +1,16 @@
 import { useRef, type KeyboardEvent } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router';
 import { Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Link, useParams, useSearchParams } from 'react-router';
-import { cn } from '@/lib/utils';
 import { CustomLogo } from '@/components/custom/CustomLogo';
+import { useAuthStore } from '@/auth/store/auth.store';
+
 
 export const CustomHeader = () => {
+  const { user, logout, getIsAdmin } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const { gender } = useParams();
 
@@ -94,17 +98,35 @@ export const CustomHeader = () => {
               <Search className="h-5 w-5" />
             </Button>
 
-            <Link to="/auth/login">
-              <Button variant="default" size="sm" className="ml-2">
-                Login
-              </Button>
-            </Link>
+            
+            {
+              !user ? (
+                /* No estamos autenticados */
+                <Link to="/auth/login">
+                  <Button variant="default" size="sm" className="ml-2">
+                    Login
+                  </Button>
+                </Link>
 
-            <Link to="/admin">
-              <Button variant="destructive" size="sm" className="ml-2">
-                Admin
-              </Button>
-            </Link>
+              ) : (
+                /* Si estamos autenticados */
+                <Button
+                  variant="outline" size="sm" className="ml-2"
+                  onClick={logout}
+                >
+                  Logout
+                </Button>
+              )
+            }
+
+            { getIsAdmin() && (
+              /* Si es admin mostramos el botón */
+              <Link to="/admin">
+                <Button variant="destructive" size="sm" className="ml-2">
+                  Admin
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
