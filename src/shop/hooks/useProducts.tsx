@@ -41,7 +41,7 @@ export const useProducts = () => {
   // UTILIZAMOS TANSTACK QUERY
   return useQuery({
     queryKey: ['products', { limit, offset,  sizes, minPrice, maxPrice, query, gender}],
-    queryFn: () => getProductsAction({ 
+    queryFn: () => getProductsAction ({ 
       limit, 
       offset,
       gender,
