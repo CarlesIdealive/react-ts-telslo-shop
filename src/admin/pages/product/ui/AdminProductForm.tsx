@@ -1,9 +1,12 @@
-import { AdminTitle } from '@/admin/components/AdminTitle';
-import { Button } from '@/components/ui/button';
-import type { Product } from '@/interfaces/product.interface';
-import { X, SaveAll, Tag, Plus, Upload } from 'lucide-react';
-import { useState } from 'react';
 import { Link } from 'react-router';
+import { useRef, useState } from 'react';
+import { X, SaveAll, Tag, Plus, Upload } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+import { useForm } from "react-hook-form";
+import { Button } from '@/components/ui/button';
+import { AdminTitle } from '@/admin/components/AdminTitle';
+import type { Product, Size } from '@/interfaces/product.interface';
 
 interface Props {
   title: string;
@@ -11,43 +14,51 @@ interface Props {
   product: Product;
 }
 
-const availableSizes = ['XS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXL'];
+const availableSizes : Size[] = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 export const AdminProductForm = ({ title, subTitle, product }: Props) => {
-  console.log({ product });
-
+  const inputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors } ,
+    getValues,
+    setValue,
+    watch
+  } = useForm({
+    defaultValues: product
+  });
+
+
+  const selectedSizes = watch('sizes');
+  const selectedTags = watch('tags');
+  const currentStock = watch('stock');
 
   const addTag = () => {
-    if (newTag.trim() && !product.tags.includes(newTag.trim())) {
-      // setProduct((prev) => ({
-      //   ...prev,
-      //   tags: [...prev.tags, newTag.trim()],
-      // }));
-    }
+    const newTagSet = new Set(getValues('tags'));
+    //Netejar espais en blanc i si existreix ','
+    const newTag = inputRef.current?.value.trim().replace(/,\s*$/, '') || ''; // El trim() elimina els espais en blanc al principi i al final
+    newTagSet.add(newTag);
+    setValue('tags', Array.from(newTagSet));
   };
 
   const removeTag = (tagToRemove: string) => {
-    // setProduct((prev) => ({
-    //   ...prev,
-    //   tags: prev.tags.filter((tag) => tag !== tagToRemove),
-    // }));
+    const updatedTags = getValues('tags').filter(tag => tag !== tagToRemove);
+    setValue('tags', updatedTags);
   };
 
-  const addSize = (size: string) => {
-    // if (!product.sizes.includes(size)) {
-    //   setProduct((prev) => ({
-    //     ...prev,
-    //     sizes: [...prev.sizes, size],
-    //   }));
-    // }
+
+  const addSize = (size: Size) => {
+    // El SET nos ayuda a evitar duplicados !!!
+    const sizeSet = new Set(getValues('sizes'));
+    sizeSet.add(size);
+    setValue('sizes', Array.from(sizeSet) as Size[]);
   };
 
-  const removeSize = (sizeToRemove: string) => {
-    // setProduct((prev) => ({
-    //   ...prev,
-    //   sizes: prev.sizes.filter((size) => size !== sizeToRemove),
-    // }));
+  const removeSize = (sizeToRemove: Size) => {
+    const updatedSizes = getValues('sizes').filter(size => size !== sizeToRemove);
+    setValue('sizes', updatedSizes);
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -73,8 +84,11 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
     console.log(files);
   };
 
+
+
+
   return (
-    <>
+    <form onSubmit={handleSubmit((data) => console.log(data))}>
       <div className="flex justify-between items-center">
         <AdminTitle title={title} subtitle={subTitle} />
         <div className="flex justify-end mb-10 gap-4">
@@ -109,11 +123,21 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
                   </label>
                   <input
                     type="text"
-                    // value={product.title}
-                    // onChange={(e) => handleInputChange('title', e.target.value)}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    {...register('title', { 
+                      required: true, 
+                      minLength: 5
+                    })}
+                    className={cn(
+                      `w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200`,
+                      errors.title && 'border-red-500'
+                    )}
                     placeholder="Título del producto"
                   />
+                  {errors.title && (
+                    <span className='text-red-500 text-sm'>{
+                      errors.title.message  || "This field is required and min length is 5"
+                    }</span>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -123,13 +147,21 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
                     </label>
                     <input
                       type="number"
-                      value={product.price}
+                      {...register('price', {
+                        required: true,
+                        min: 0
+                      })}
+                      // value={product.price}
                       // onChange={(e) =>
                       //   handleInputChange('price', parseFloat(e.target.value))
                       // }
                       className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       placeholder="Precio del producto"
                     />
+                    {errors.price && (
+                      <span className='text-red-500 text-sm'>This field is required</span>
+                   )}
+
                   </div>
 
                   <div>
@@ -138,6 +170,7 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
                     </label>
                     <input
                       type="number"
+                      {...register('stock')}
                       // value={product.stock}
                       // onChange={(e) =>
                       //   handleInputChange('stock', parseInt(e.target.value))
@@ -154,11 +187,16 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
                   </label>
                   <input
                     type="text"
-                    // value={product.slug}
-                    // onChange={(e) => handleInputChange('slug', e.target.value)}
+                    {...register('slug', {
+                      required: true,
+                      validate: (value) => !/\s/.test(value) || 'No spaces allowed',
+                    })}
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     placeholder="Slug del producto"
                   />
+                  {errors.slug && (
+                    <span className='text-red-500 text-sm'>{errors.slug.message || 'Slug is required'}</span>
+                  )}
                 </div>
 
                 <div>
@@ -166,6 +204,7 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
                     Género del producto
                   </label>
                   <select
+                    {...register('gender')}
                     // value={product.gender}
                     // onChange={(e) =>
                     //   handleInputChange('gender', e.target.value)
@@ -184,6 +223,7 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
                     Descripción del producto
                   </label>
                   <textarea
+                    {...register('description')}
                     // value={product.description}
                     // onChange={(e) =>
                     //   handleInputChange('description', e.target.value)
@@ -201,39 +241,43 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
               <h2 className="text-xl font-semibold text-slate-800 mb-6">
                 Tallas disponibles
               </h2>
-
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-2">
-                  {product.sizes.map((size) => (
+                  {availableSizes.map((size) => (
                     <span
                       key={size}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200"
-                    >
+                      className={
+                        cn("inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200",
+                          {
+                            'hidden': !selectedSizes.includes(size)
+                          }
+                        )
+                      }>
                       {size}
                       <button
-                        // onClick={() => removeSize(size)}
-                        className="ml-2 text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                        onClick={() => removeSize(size)}
+                        className="cursor-pointer ml-2 text-blue-600 hover:text-blue-800 transition-colors duration-200"
                       >
                         <X className="h-3 w-3" />
                       </button>
                     </span>
                   ))}
                 </div>
-
                 <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200">
                   <span className="text-sm text-slate-600 mr-2">
                     Añadir tallas:
                   </span>
                   {availableSizes.map((size) => (
                     <button
+                      type="button" // Prevent form submission - que en este caso enviava el formulario
                       key={size}
-                      // onClick={() => addSize(size)}
-                      // disabled={product.sizes.includes(size)}
-                      // className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
-                      //   product.sizes.includes(size)
-                      //     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                      //     : 'bg-slate-200 text-slate-700 hover:bg-slate-300 cursor-pointer'
-                      // }`}
+                      onClick={() => addSize(size)}
+                      disabled={getValues('sizes').includes(size)}
+                      className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
+                        selectedSizes.includes(size)
+                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          : 'bg-slate-200 text-slate-700 hover:bg-slate-300 cursor-pointer'
+                      }`}
                     >
                       {size}
                     </button>
@@ -247,10 +291,9 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
               <h2 className="text-xl font-semibold text-slate-800 mb-6">
                 Etiquetas
               </h2>
-
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-2">
-                  {product.tags.map((tag) => (
+                  {selectedTags.map((tag) => (
                     <span
                       key={tag}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 border border-green-200"
@@ -258,8 +301,8 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
                       <Tag className="h-3 w-3 mr-1" />
                       {tag}
                       <button
-                        // onClick={() => removeTag(tag)}
-                        className="ml-2 text-green-600 hover:text-green-800 transition-colors duration-200"
+                        onClick={() => removeTag(tag)}
+                        className="cursor-pointer ml-2 text-green-600 hover:text-green-800 transition-colors duration-200"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -270,20 +313,27 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    // value={newTag}
-                    // onChange={(e) => setNewTag(e.target.value)}
-                    // onKeyDown={(e) => e.key === 'Enter' && addTag()}
+                    ref={inputRef}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
+                        e.preventDefault();
+                        addTag();
+                        inputRef.current!.value = '';
+                      }
+                    }}
                     placeholder="Añadir nueva etiqueta..."
                     className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   />
-                  {/* TODO: */}
-                  {/* <Button onClick={addTag} className="px-4 py-2rounded-lg ">
+                  <Button onClick={addTag} className="px-4 py-2rounded-lg ">
                     <Plus className="h-4 w-4" />
-                  </Button> */}
+                  </Button>
                 </div>
               </div>
             </div>
           </div>
+
+
+
 
           {/* Sidebar */}
           <div className="space-y-6">
@@ -377,16 +427,17 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
                   </span>
                   <span
                     className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      product.stock > 5
+                      currentStock > 5
                         ? 'bg-green-100 text-green-800'
-                        : product.stock > 0
+                        : currentStock > 0
                         ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-red-100 text-red-800'
                     }`}
                   >
-                    {product.stock > 5
+                    {currentStock} - 
+                    {currentStock > 5
                       ? 'En stock'
-                      : product.stock > 0
+                      : currentStock > 0
                       ? 'Bajo stock'
                       : 'Sin stock'}
                   </span>
@@ -406,7 +457,7 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
                     Tallas disponibles
                   </span>
                   <span className="text-sm text-slate-600">
-                    {product.sizes.length} tallas
+                    {selectedSizes.length} tallas
                   </span>
                 </div>
               </div>
@@ -414,6 +465,6 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
           </div>
         </div>
       </div>
-    </>
+    </form>
   );
 };

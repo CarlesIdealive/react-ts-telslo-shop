@@ -29,7 +29,12 @@ export const NotAuthenticatedRoute = ({children}: React.PropsWithChildren) => {
 export const AdminRoute = ({children}: React.PropsWithChildren) => {
   const { getIsLogged, getIsAdmin } = useAuthStore();
   //Si está autenticado y no es admin, redirigir al home
-  if(getIsLogged() || !getIsAdmin()) {
+  console.log({isLogged: getIsLogged(), isAdmin: getIsAdmin()});
+  
+  if(!getIsLogged()) {
+    return <Navigate to="/auth" replace />  //Replace no permite volver atrás
+  }
+  if(!getIsAdmin()) {
     return <Navigate to="/" replace />  //Replace no permite volver atrás
   }
   return children;    
