@@ -12,11 +12,21 @@ interface Props {
   title: string;
   subTitle: string;
   product: Product;
+  isMutating?: boolean;
+  //Metodos
+  onFormSubmit: (productLike: Partial<Product>) => Promise<void>;
 }
 
 const availableSizes : Size[] = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
-export const AdminProductForm = ({ title, subTitle, product }: Props) => {
+export const AdminProductForm = ({ 
+  title, 
+  subTitle, 
+  product, 
+  isMutating = false,
+  onFormSubmit 
+}: Props) => {
+
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const { 
@@ -47,7 +57,6 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
     const updatedTags = getValues('tags').filter(tag => tag !== tagToRemove);
     setValue('tags', updatedTags);
   };
-
 
   const addSize = (size: Size) => {
     // El SET nos ayuda a evitar duplicados !!!
@@ -88,18 +97,19 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
 
 
   return (
-    <form onSubmit={handleSubmit((data) => console.log(data))}>
+    // Se manda llamar a la función onFormSubmit que viene de props (padre)
+    <form onSubmit={handleSubmit(onFormSubmit)}>
       <div className="flex justify-between items-center">
         <AdminTitle title={title} subtitle={subTitle} />
         <div className="flex justify-end mb-10 gap-4">
-          <Button variant="outline">
+          <Button type='button' variant="outline">
             <Link to="/admin/products" className="flex items-center gap-2">
               <X className="w-4 h-4" />
               Cancelar
             </Link>
           </Button>
 
-          <Button>
+          <Button type='submit' disabled={isMutating}>
             <SaveAll className="w-4 h-4" />
             Guardar cambios
           </Button>
@@ -255,7 +265,10 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
                       }>
                       {size}
                       <button
-                        onClick={() => removeSize(size)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          removeSize(size);
+                        }}
                         className="cursor-pointer ml-2 text-blue-600 hover:text-blue-800 transition-colors duration-200"
                       >
                         <X className="h-3 w-3" />
@@ -301,7 +314,10 @@ export const AdminProductForm = ({ title, subTitle, product }: Props) => {
                       <Tag className="h-3 w-3 mr-1" />
                       {tag}
                       <button
-                        onClick={() => removeTag(tag)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          removeTag(tag);
+                        }}
                         className="cursor-pointer ml-2 text-green-600 hover:text-green-800 transition-colors duration-200"
                       >
                         <X className="h-3 w-3" />
